@@ -171,7 +171,7 @@ io.on('connection', (socket) => {
     const id = makeRoomId();
     rooms.set(id, { players: new Set([socket.id]), colors: new Map([[socket.id, 'w']]), createdAt: Date.now(), history: [] });
     socket.join(id);
-    cb(id);
+    try { cb({ roomId: id, color: 'w' }); } catch { /* fallback if client not expecting object */ socket.emit('yourColor', { color: 'w', roomId: id }); }
     const user = socket.data.username || socket.id.slice(0,5);
     io.to(id).emit('system', { text: `${user} đã tạo phòng` });
   });
@@ -184,14 +184,25 @@ io.on('connection', (socket) => {
     // assign black to the second player
     if (!r.colors.has(socket.id)) r.colors.set(socket.id, 'b');
     socket.join(roomId);
-    cb(true);
+    try { cb({ ok: true, color: 'b' }); } catch { socket.emit('yourColor', { color: 'b', roomId }); }
     socket.data.username = username || socket.data.username || 'Khách';
     io.to(roomId).emit('system', { text: `${socket.data.username} đã tham gia phòng` });
     // send current history to the joining socket for synchronization
     try { socket.emit('sync', { history: r.history || [] }); } catch {}
   });
 
-  socket.on('move', ({ roomId, from, to }) => {
+  // Allow a client to query what color the server assigned to it in a room
+  socket.on('myColor', ({ roomId }, cb) => {
+    const r = rooms.get(roomId);
+    const color = r?.colors?.get(socket.id) || 'w';
+    if (typeof cb === 'function') {
+      try { cb({ color }); } catch {}
+    } else {
+      socket.emit('yourColor', { color, roomId });
+    }
+  });
+
+  socket.on('move', ({ roomId, from, to }, cb) => {
     const r = rooms.get(roomId);
     if (r) {
       r.history = r.history || [];
@@ -204,8 +215,26 @@ io.on('connection', (socket) => {
         return;
       }
       r.history.push({ from, to });
+      // Sync is heavy; only emit on request or when a player joins
+  }
+  // Broadcast move to all clients in room (including sender);
+  // sender has already applied locally, and duplicate apply will be ignored.
+  io.to(roomId).emit('move', { from, to });
+    if (typeof cb === 'function') {
+      try { cb({ ok: true }); } catch {}
     }
-    socket.to(roomId).emit('move', { from, to });
+  });
+
+  // Allow clients to request a fresh sync of current room history
+  socket.on('requestSync', ({ roomId }, cb) => {
+    const r = rooms.get(roomId);
+    const history = r?.history || [];
+    try {
+      // Reply via ack if callback is provided
+      if (typeof cb === 'function') cb({ history });
+      // Also emit directly to the requester for broader compatibility
+      socket.emit('sync', { history });
+    } catch {}
   });
 
   socket.on('chat', ({ roomId, text, gif }) => {

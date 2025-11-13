@@ -11,6 +11,7 @@ type Props = {
   perspective?: 'w' | 'b';
   onMove?: (from: string, to: string) => void;
   allowMoves?: boolean;
+  deferLocal?: boolean; // when true, do NOT apply local move; rely on external onMove
 };
 
 const files = ['a','b','c','d','e','f','g','h'];
@@ -27,7 +28,7 @@ function pieceImageUrl(color: 'w' | 'b', type: string) {
   return `https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/img/chesspieces/wikipedia/${color}${t}.png`;
 }
 
-export default function ChessBoard({ size = 512, perspective = 'w', onMove, allowMoves = true }: Props) {
+export default function ChessBoard({ size = 512, perspective = 'w', onMove, allowMoves = true, deferLocal = false }: Props) {
   const { chess, move, moves } = useGameStore();
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -41,8 +42,13 @@ export default function ChessBoard({ size = 512, perspective = 'w', onMove, allo
       setSelected(sq);
       return;
     }
-    const ok = move(selected, sq);
-    if (ok && onMove) onMove(selected, sq);
+    if (deferLocal) {
+      // rely on onMove to inform server; local board will update when broadcast arrives
+      if (onMove) onMove(selected, sq);
+    } else {
+      const ok = move(selected, sq);
+      if (ok && onMove) onMove(selected, sq);
+    }
     setSelected(null);
   };
 

@@ -13,11 +13,13 @@ export function getSocket(opts: SocketOpts = {}) {
   if (!socket) {
     const url = opts.url || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000';
     socket = io(url, {
+      // Prefer pure WebSocket for lowest latency
       transports: ['websocket'],
+      upgrade: false,
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 600,
-      timeout: 8000,
+      timeout: 5000,
       auth: opts.authToken ? { token: opts.authToken } : undefined,
     });
     // basic diagnostics
