@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0f1216;
+  --fg: #eaeef3;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+.neo-board {
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.4);
+  border-radius: 10px;
+}
+
+.square-anim {
+  transition: background-color 150ms ease, transform 120ms ease;
+}
+
+.move-anim {
+  transition: transform 180ms ease;
+}
+
+/* Event animations */
+@keyframes popIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.check-banner {
+  animation: popIn 400ms ease-out;
+}
+
+@keyframes winPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.win-banner {
+  animation: winPop 600ms ease-out;
+}
+
+/* Shake and glow effects */
+@keyframes shake {
+  0% { transform: translate3d(0, 0, 0); }
+  15% { transform: translate3d(-2px, 0, 0); }
+  30% { transform: translate3d(2px, 0, 0); }
+  45% { transform: translate3d(-1px, 0, 0); }
+  60% { transform: translate3d(1px, 0, 0); }
+  75% { transform: translate3d(-1px, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.shake {
+  animation: shake 480ms ease-in-out infinite;
+}
+
+@keyframes shakeHeavy {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  20% { transform: translate3d(-3px, 0, 0) rotate(-0.3deg); }
+  40% { transform: translate3d(3px, 0, 0) rotate(0.3deg); }
+  60% { transform: translate3d(-2px, 0, 0) rotate(-0.2deg); }
+  80% { transform: translate3d(2px, 0, 0) rotate(0.2deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+.shake-heavy {
+  animation: shakeHeavy 700ms ease-in-out infinite;
+}
+
+@keyframes rumble {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-2px, 0, 0); }
+  50% { transform: translate3d(2px, 0, 0); }
+  75% { transform: translate3d(-1px, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.rumble {
+  animation: rumble 500ms ease-in-out 1;
+}
+
+@keyframes ringPulse {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.9), 0 0 12px rgba(244, 63, 94, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0.15), 0 0 18px rgba(244, 63, 94, 0.9); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.9), 0 0 12px rgba(244, 63, 94, 0.7); }
+}
+
+.king-check-ring {
+  border: 3px solid #f43f5e; /* rose-500 */
+  border-radius: 8px;
+  animation: ringPulse 900ms ease-in-out infinite;
+}
+
+/* Fire effect on checked king */
+@keyframes fireFlicker {
+  0% { transform: scale(1) translateY(0); opacity: 0.75; }
+  30% { transform: scale(1.02) translateY(-1px); opacity: 0.95; }
+  60% { transform: scale(0.98) translateY(1px); opacity: 0.85; }
+  100% { transform: scale(1) translateY(0); opacity: 0.9; }
+}
+
+.king-fire {
+  background: radial-gradient(closest-side, rgba(252, 211, 77, 0.35), transparent 70%),
+              radial-gradient(closest-side, rgba(244, 63, 94, 0.3), transparent 72%),
+              radial-gradient(closest-side, rgba(234, 88, 12, 0.25), transparent 74%);
+  mix-blend-mode: screen;
+  animation: fireFlicker 500ms ease-in-out infinite;
+}
+
+.king-fire-piece {
+  text-shadow: 0 0 6px rgba(252, 211, 77, 0.9), 0 0 12px rgba(244, 63, 94, 0.7);
+  animation: fireFlicker 500ms ease-in-out infinite;
+}
+
+/* Slow capture (king fade-out on mate) */
+@keyframes kingDie {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; filter: none; }
+  30% { transform: scale(1.05) rotate(3deg); opacity: 0.95; filter: drop-shadow(0 0 6px rgba(244,63,94,0.5)); }
+  60% { transform: scale(0.85) rotate(-6deg); opacity: 0.5; filter: blur(0.4px); }
+  100% { transform: scale(0.65) rotate(-12deg); opacity: 0; filter: blur(1px); }
+}
+
+.king-die {
+  animation: kingDie 1200ms ease-in-out forwards;
+}
+
+/* Attacker slow zoom emphasis on mate */
+@keyframes attackerSlowZoom {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.attacker-slow {
+  animation: attackerSlowZoom 1200ms ease-in-out;
+}
+.toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 50;
+  background: #22c55e; /* green-500 */
+  color: #0b0f14;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  font-weight: 600;
+  animation: popIn 280ms ease-out;
+}
+
+/* Ensure chess piece contrast: white pieces appear white, black pieces appear black */
+.piece-white {
+  color: #ffffff;
+  text-shadow: 0 0 2px #000000, 0 0 6px #000000;
+}
+.piece-black {
+  color: #111111;
+  text-shadow: 0 0 2px #ffffff, 0 0 6px #ffffff;
+}

@@ -1,0 +1,36 @@
+{
+  "name": "covua",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "server": "npm --prefix server start",
+    "setup": "npm install && npm --prefix server install"
+  },
+  "dependencies": {
+    "chess.js": "^1.0.0",
+    "clsx": "^2.1.1",
+    "firebase": "^12.5.0",
+    "jwt-decode": "^4.0.0",
+    "next": "^14.2.5",
+    "next-auth": "^4.24.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "socket.io-client": "^4.7.5",
+    "stockfish": "^14.1.0",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.4",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.5",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.2"
+  }
+}
