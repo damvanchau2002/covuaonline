@@ -64,6 +64,11 @@ async function connectDb() {
 
 connectDb();
 
+// Root route to avoid "Cannot GET /" confusion
+app.get('/', (req, res) => {
+  res.send('OK: covua socket/api server');
+});
+
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body || {};
@@ -154,7 +159,7 @@ app.post('/api/matches/finish', async (req, res) => {
 });
 
 // Socket.IO rooms & game relay
-const rooms = new Map(); // roomId -> { players: Set(socketId), createdAt }
+const rooms = new Map(); // roomId -> { players: Set(socketId), colors: Map<socketId,'w'|'b'>, createdAt, history: Array<{from:string;to:string}> }
 
 function makeRoomId() { return Math.random().toString(36).slice(2,8); }
 
@@ -164,7 +169,7 @@ io.on('connection', (socket) => {
   });
   socket.on('createRoom', (_, cb) => {
     const id = makeRoomId();
-    rooms.set(id, { players: new Set([socket.id]), createdAt: Date.now() });
+    rooms.set(id, { players: new Set([socket.id]), colors: new Map([[socket.id, 'w']]), createdAt: Date.now(), history: [] });
     socket.join(id);
     cb(id);
     const user = socket.data.username || socket.id.slice(0,5);
@@ -175,19 +180,39 @@ io.on('connection', (socket) => {
     if (!rooms.has(roomId)) { cb(false); return; }
     const r = rooms.get(roomId);
     r.players.add(socket.id);
+    r.colors = r.colors || new Map();
+    // assign black to the second player
+    if (!r.colors.has(socket.id)) r.colors.set(socket.id, 'b');
     socket.join(roomId);
     cb(true);
     socket.data.username = username || socket.data.username || 'Khách';
     io.to(roomId).emit('system', { text: `${socket.data.username} đã tham gia phòng` });
+    // send current history to the joining socket for synchronization
+    try { socket.emit('sync', { history: r.history || [] }); } catch {}
   });
 
   socket.on('move', ({ roomId, from, to }) => {
+    const r = rooms.get(roomId);
+    if (r) {
+      r.history = r.history || [];
+      // enforce turn order: white moves on even index, black on odd index
+      const idx = r.history.length; // 0-based before pushing
+      const expected = idx % 2 === 0 ? 'w' : 'b';
+      const color = r.colors?.get(socket.id) || 'w';
+      if (color !== expected) {
+        socket.emit('system', { text: 'Chưa đến lượt bạn' });
+        return;
+      }
+      r.history.push({ from, to });
+    }
     socket.to(roomId).emit('move', { from, to });
   });
 
-  socket.on('chat', ({ roomId, text }) => {
+  socket.on('chat', ({ roomId, text, gif }) => {
     const user = socket.data.username || socket.id.slice(0,5);
-    io.to(roomId).emit('chat', { user, text, ts: Date.now() });
+    const payload = { user, text, ts: Date.now() };
+    if (gif) payload.gif = String(gif);
+    io.to(roomId).emit('chat', payload);
   });
 
   socket.on('disconnect', () => {

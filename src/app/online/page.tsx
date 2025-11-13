@@ -26,8 +26,20 @@ export default function OnlinePage() {
     const onMove = (payload: { from:string; to:string }) => {
       move(payload.from, payload.to);
     };
+    const onSync = (payload: { history?: Array<{from:string;to:string}> }) => {
+      try {
+        const hist = Array.isArray(payload?.history) ? payload.history : [];
+        if (hist.length > 0) {
+          reset();
+          for (const m of hist) {
+            move(m.from, m.to);
+          }
+        }
+      } catch {}
+    };
     s.on('move', onMove);
-    return () => { s.off('move', onMove); };
+    s.on('sync', onSync);
+    return () => { s.off('move', onMove); s.off('sync', onSync); };
   }, [move, session]);
 
   // Show toast when redirected back with login=success
@@ -77,6 +89,7 @@ export default function OnlinePage() {
   };
 
   const handleMove = (from: string, to: string) => {
+    if (turn !== meColor) { setToast('Chưa đến lượt bạn'); return; }
     const ok = move(from, to);
     if (!ok) return;
     playMoveSound();
@@ -115,7 +128,7 @@ export default function OnlinePage() {
           <button className="px-3 py-2 rounded bg-[#1f2633] hover:bg-[#232b3a]" onClick={reset}>Reset</button>
         </div>
         <div className="text-sm text-gray-300 mb-2">Phòng: {roomId || 'chưa tạo/tham gia'} | Người dùng: {(session as any)?.username || session?.user?.name} | Bạn: {meColor === 'w' ? 'Trắng' : 'Đen'} | Lượt: {turn === 'w' ? 'Trắng' : 'Đen'}</div>
-        <ChessBoard size={520} perspective={meColor} onMove={handleMove} allowMoves={joined} />
+        <ChessBoard size={520} perspective={meColor} onMove={handleMove} allowMoves={joined && turn === meColor} />
       </div>
       <Chat roomId={roomId} />
       {toast && <div className="toast">{toast}</div>}

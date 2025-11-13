@@ -8,7 +8,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
+    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     fetch(`${url}/api/leaderboard`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then(setBoard)
